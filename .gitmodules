@@ -1,0 +1,6 @@
+[submodule "SimpleLatLon"]
+	path = SimpleLatLon
+	url = https://github.com/JavadocMD/simplelatlng.git
+[submodule "jak"]
+	path = jak
+	url = https://github.com/micromata/javaapiforkml.git
