@@ -1,2 +1,5 @@
 /build/
 /dist/
+thermalOutput.kml
+data/*
+thermalOutput.kml

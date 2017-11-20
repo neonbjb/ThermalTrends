@@ -96,7 +96,10 @@ public class Flight {
                 while(i < (fixes.size() - getFixesPerMinute()) && checkThermalRateRequirements(i)) {
                     i++;
                 }
-                int thermalEndIndex = i + 9;
+                if(i >= (fixes.size() - getFixesPerMinute())) {
+                    break;
+                }
+                int thermalEndIndex = i + getFixesPerMinute();
                 FlightFix endFix = fixes.get(thermalEndIndex);
                 double altGain = endFix.alt - startFix.alt;
                 if(altGain > Configuration.getConfig().MinThermalClimbDistance) {
