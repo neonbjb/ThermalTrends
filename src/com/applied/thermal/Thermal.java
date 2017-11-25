@@ -66,12 +66,16 @@ public class Thermal {
         computed = true;
     }
     
-    static final String THERMAL_STYLE_NAME = "style_thermal";
+    static final String THERMAL_STYLE_NAME = "style_thermal_";
     public static void exportThermalStyleToKml(Document kmlDoc) {
-	Style style = kmlDoc.createAndAddStyle();
-	style.withId(THERMAL_STYLE_NAME);
-        style.createAndSetLineStyle().withColor("ffff0000").withWidth(2);
-        style.createAndSetPolyStyle().withColor("7fffffff");
+        // Color thermals by month.
+        for(int i = 0; i < 12; i++) {
+            Style style = kmlDoc.createAndAddStyle();
+            style.withId(THERMAL_STYLE_NAME + i);
+            int color = 0xffffff / 12 * i;
+            style.createAndSetLineStyle().withColor("ff" + Integer.toHexString(color)).withWidth(2);
+            style.createAndSetPolyStyle().withColor("7fffffff");
+        }
     }
     
     public void exportToKml(Folder kmlFolder) {
@@ -82,7 +86,7 @@ public class Thermal {
 	Placemark placemark = kmlFolder.createAndAddPlacemark();
 	// use the style for each continent
 	placemark.withName(name)
-	    .withStyleUrl("#" + THERMAL_STYLE_NAME)
+	    .withStyleUrl("#" + THERMAL_STYLE_NAME + fixesInThermal.get(0).time.getMonth())
             .withDescription("Date: " + fixesInThermal.get(0).time.toLocaleString() + 
                              "\nPilot: " + flight.pilot + 
                              "\nGlider: " + flight.airplane + 
