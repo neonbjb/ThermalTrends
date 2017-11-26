@@ -27,6 +27,7 @@ public class Main {
     static class ThermalsByMonth {
         public int thermalCount = 0;
         public Folder folder;
+        public Folder trajFolder;
     }
     
     public static void main(String[] args) {
@@ -39,6 +40,8 @@ public class Main {
         for(int i = 0; i < byMonth.length; i++) {
             byMonth[i] = new ThermalsByMonth();
             byMonth[i].folder = doc.createAndAddFolder();
+            byMonth[i].trajFolder = byMonth[i].folder.createAndAddFolder();
+            byMonth[i].trajFolder.withName("Thermal Trajectories");
         }
         
         File dataFolder = new File("data");
@@ -50,7 +53,7 @@ public class Main {
                 for(Thermal thermal : record.getFlight().thermals) {
                     // Place thermal into appropriate month-folder.
                     int month = thermal.fixesInThermal.get(0).time.getMonth();
-                    thermal.exportToKml(byMonth[month].folder);
+                    thermal.exportToKml(byMonth[month].folder, byMonth[month].trajFolder);
                     byMonth[month].thermalCount++;
                 }
             }

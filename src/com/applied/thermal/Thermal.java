@@ -16,6 +16,8 @@
 package com.applied.thermal;
 
 import com.javadocmd.simplelatlng.LatLng;
+import com.javadocmd.simplelatlng.LatLngTool;
+import com.javadocmd.simplelatlng.util.LengthUnit;
 import java.util.ArrayList;
 
 import de.micromata.opengis.kml.v_2_2_0.*;
@@ -67,6 +69,7 @@ public class Thermal {
     }
     
     static final String THERMAL_STYLE_NAME = "style_thermal_";
+    static final String THERMAL_TRAJ_STYLE_NAME = "style_thermal_traj_";
     public static void exportThermalStyleToKml(Document kmlDoc) {
         // Color thermals by month.
         for(int i = 0; i < 12; i++) {
@@ -75,10 +78,16 @@ public class Thermal {
             int color = 0xffffff / 12 * i;
             style.createAndSetLineStyle().withColor("ff" + Integer.toHexString(color)).withWidth(2);
             style.createAndSetPolyStyle().withColor("7fffffff");
+            
+            // styles for thermal trajectories
+            style = kmlDoc.createAndAddStyle();
+            style.withId(THERMAL_TRAJ_STYLE_NAME + i);
+            style.createAndSetLineStyle().withColor("ff" + Integer.toHexString(color)).withWidth(4);
+            style.createAndSetPolyStyle().withColor("7fffffff");
         }
     }
     
-    public void exportToKml(Folder kmlFolder) {
+    public void exportToKml(Folder kmlFolder, Folder trajFolder) {
         if(!computed) {
             compute();
         }
@@ -98,6 +107,71 @@ public class Thermal {
         for(FlightFix fix : fixesInThermal) {
             line.addToCoordinates(fix.pos.getLongitude(), fix.pos.getLatitude(), fix.alt);
         }
+        
+        placemark = trajFolder.createAndAddPlacemark();
+	// use the style for each continent
+	placemark.withName(name + "_ThermalTrajectory")
+	    .withStyleUrl("#" + THERMAL_TRAJ_STYLE_NAME + fixesInThermal.get(0).time.getMonth());
+        placemark.withVisibility(false);
+        line = placemark.createAndSetLineString();
+        line.setAltitudeMode(AltitudeMode.ABSOLUTE);
+        LatLng bottom = getGroundPosition();
+        line.addToCoordinates(bottom.getLongitude(), bottom.getLatitude(), 0);
+        LatLng top = getHighestPoint();
+        line.addToCoordinates(top.getLongitude(), top.getLatitude(), fixesInThermal.get(fixesInThermal.size()-1).alt);
+    }
+    
+    static class ShiftVector {
+        public double magnitude; //! Magnitude of shift in meters(lateral)/meters(altitude)
+        public double heading; //! Velocity heading in degrees.
+        
+        public LatLng extrapolateFixTo(FlightFix fix, double altitudeTo) {
+            double altitudeDiff = altitudeTo - fix.alt;
+            double metersLateral = magnitude * altitudeDiff;
+            double head = heading;
+            if(metersLateral < 0) {
+                metersLateral = -metersLateral;
+                head = (heading + 180) % 360;
+            }
+            return LatLngTool.travel(fix.pos, head, metersLateral, LengthUnit.METER);
+        }
+    }
+    
+    /**
+     * Generates an average shift vector for the entire thermal. This is currently
+     * crudely calculated by getting the lateral distance from the top fix and bottom
+     * fix and dividing out the altitude change.
+     * @return 
+     */
+    public ShiftVector getAverageShift() {
+        ShiftVector ret = new ShiftVector();
+        double distanceShift = LatLngTool.distance(fixesInThermal.get(fixesInThermal.size() - 1).pos, fixesInThermal.get(0).pos, LengthUnit.METER);
+        double altShift = fixesInThermal.get(fixesInThermal.size() - 1).alt - fixesInThermal.get(0).alt;
+        
+        ret.heading = LatLngTool.initialBearing(fixesInThermal.get(0).pos, fixesInThermal.get(fixesInThermal.size() - 1).pos);
+        ret.magnitude = distanceShift / altShift;
+        
+        return ret;
+    }
+    
+    /**
+     * Generates a linear plot of lateral shifting for the thermal across the
+     * ground and returns the intercept point using that average velocity, starting
+     * at the base of lift and extrapolated to the top of lift.
+     * @return 
+     */
+    public LatLng getHighestPoint() {
+        return getAverageShift().extrapolateFixTo(fixesInThermal.get(0), fixesInThermal.get(fixesInThermal.size()-1).alt);
+    }
+    
+    /**
+     * Generates a linear plot of lateral shifting for the thermal across the
+     * ground and returns the intercept point using that average velocity, starting
+     * at the base of lift and extrapolated to 0 MSL.
+     * @return 
+     */
+    public LatLng getGroundPosition() {
+        return getAverageShift().extrapolateFixTo(fixesInThermal.get(0), 0);
     }
     
     Flight flight;
