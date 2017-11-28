@@ -44,7 +44,7 @@ public class Main {
             byMonth[i].trajFolder.withName("Thermal Trajectories");
         }
         
-        File dataFolder = new File("data");
+        File dataFolder = new File("testdata");
         for(File file : dataFolder.listFiles()) {
             System.out.println("Processing " + file.getName());
             if(file.getName().endsWith(".kml")) {
