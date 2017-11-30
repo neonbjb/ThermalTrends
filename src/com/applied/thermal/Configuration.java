@@ -25,6 +25,7 @@ public class Configuration {
     public double MaxSpeedInThermal = 17;
     public double MinThermalClimbDistance = 300;
     public double MinThermalClimbRate = 2; // 2 m/s corresponds to approximately 400fpm
+    public Units.UnitSystem CurrentUnitSystem = Units.UnitSystem.Metric;
     
     static Configuration instance;
     public static Configuration getConfig() {

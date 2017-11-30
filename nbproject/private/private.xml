@@ -3,11 +3,8 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/C:/Projects/ThermalTrends/src/com/applied/thermal/FlightFix.java</file>
-            <file>file:/C:/Projects/ThermalTrends/src/com/applied/thermal/Flight.java</file>
-            <file>file:/C:/Projects/ThermalTrends/src/com/applied/thermal/Main.java</file>
-            <file>file:/C:/Projects/ThermalTrends/src/com/applied/thermal/OLCKmlRecord.java</file>
-            <file>file:/C:/Projects/ThermalTrends/src/com/applied/thermal/Thermal.java</file>
+            <file>file:/D:/projects/ThermalTrends/src/com/applied/thermal/ui/MainFrame.java</file>
+            <file>file:/D:/projects/ThermalTrends/src/com/applied/thermal/Main.java</file>
         </group>
     </open-files>
 </project-private>

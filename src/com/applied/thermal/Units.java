@@ -28,20 +28,13 @@ public class Units {
         Knots    //! Corresponds to feet, knots vertical and knots horizontal
     }
     
-    static UnitSystem currentUnitSystem = UnitSystem.Metric;
     static NumberFormat numberFormat = NumberFormat.getInstance();
     static{
         numberFormat.setMaximumFractionDigits(2);
     }
     
-    public static void setUnitSystem(UnitSystem sys) {
-        currentUnitSystem = sys;
-    }
-    
-    
-    
     public static String climb(double aRateOfClimb) {
-        switch(currentUnitSystem) {
+        switch(Configuration.getConfig().CurrentUnitSystem) {
             case Metric:
                 numberFormat.format(aRateOfClimb);
             case Feet:
@@ -53,7 +46,7 @@ public class Units {
     }
     
     public static String height(double aHeight) {
-        switch(currentUnitSystem) {
+        switch(Configuration.getConfig().CurrentUnitSystem) {
             case Metric:
                 numberFormat.format(aHeight);
             case Feet:
@@ -65,7 +58,7 @@ public class Units {
     }
     
     public static String speed(double aSpeed) {
-        switch(currentUnitSystem) {
+        switch(Configuration.getConfig().CurrentUnitSystem) {
             case Metric:
                 numberFormat.format(aSpeed * 3.6000059687997);
             case Feet:
