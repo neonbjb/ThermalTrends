@@ -111,6 +111,14 @@ public class Flight {
         }
     }
     
+    public String getPilot() {
+        return pilot;
+    }
+    
+    public String getAirplane() {
+        return airplane;
+    }
+    
     Date date;
     String pilot;
     String airplane;    

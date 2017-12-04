@@ -15,35 +15,26 @@
  */
 package com.applied.thermal;
 
+import com.applied.thermal.types.ThermalCategory;
+import com.applied.thermal.types.ThermalCategory.ThermalSortingField;
+import com.applied.thermal.types.ThermalCategoryFactory;
+import com.applied.thermal.types.ThermalCollection;
 import java.io.File;
 import de.micromata.opengis.kml.v_2_2_0.*;
-import java.text.DateFormatSymbols;
 
 /**
  *
  * @author James Betker
  */
 public class Main {
-    static class ThermalsByMonth {
-        public int thermalCount = 0;
-        public Folder folder;
-        public Folder trajFolder;
-    }
     
     public static void main(String[] args) {
         System.out.println("Starting up..");
         final Kml outputKml = new Kml();
         Document doc = outputKml.createAndSetDocument().withName("Thermals").withOpen(true);
-        Thermal.exportThermalStyleToKml(doc);
+        KmlFolderCategory.exportThermalStyleToKml(doc);
         
-        ThermalsByMonth[] byMonth = new ThermalsByMonth[12];
-        for(int i = 0; i < byMonth.length; i++) {
-            byMonth[i] = new ThermalsByMonth();
-            byMonth[i].folder = doc.createAndAddFolder();
-            byMonth[i].trajFolder = byMonth[i].folder.createAndAddFolder();
-            byMonth[i].trajFolder.withName("Thermal Trajectories");
-        }
-        
+        ThermalCollection collection = new ThermalCollection();
         File dataFolder = new File("testdata");
         for(File file : dataFolder.listFiles()) {
             System.out.println("Processing " + file.getName());
@@ -51,17 +42,23 @@ public class Main {
                 OLCKmlRecord record = new OLCKmlRecord(file);
                 record.getFlight().computeThermalFixes();
                 for(Thermal thermal : record.getFlight().thermals) {
-                    // Place thermal into appropriate month-folder.
-                    int month = thermal.fixesInThermal.get(0).time.getMonth();
-                    thermal.exportToKml(byMonth[month].folder, byMonth[month].trajFolder);
-                    byMonth[month].thermalCount++;
+                    collection.add(thermal);
                 }
             }
         }
         
-        for(int i = 0; i < byMonth.length; i++) {
-            byMonth[i].folder.withName(new DateFormatSymbols().getMonths()[i] + " (" + byMonth[i].thermalCount + ")").withOpen(false);
-        }
+        ThermalSortingField[] fields = { ThermalSortingField.ThermalStrength, ThermalSortingField.Month };
+        collection.generateCategories(new ThermalCategoryFactory() {
+            @Override
+            public ThermalCategory createCategory(ThermalSortingField aField, String aTitle, ThermalCategory aParentCategory) {
+                if(aParentCategory == null) {
+                    return new KmlFolderCategory(aField, aParentCategory, aTitle, doc);
+                } else {
+                    return new KmlFolderCategory(aField, aParentCategory, aTitle, ((KmlFolderCategory)aParentCategory).folder);
+                }
+                
+            }
+        }, fields);
 
         try {
             outputKml.marshal(new File("thermalOutput.kml"));

@@ -15,6 +15,9 @@
  */
 package com.applied.thermal;
 
+import com.applied.thermal.Units.UnitSystem;
+import com.applied.thermal.types.ThermalCategory.ThermalSortingField;
+
 /**
  * Defines configuration constants which determine how this application works.
  * All distances are in meters.
@@ -25,7 +28,9 @@ public class Configuration {
     public double MaxSpeedInThermal = 17;
     public double MinThermalClimbDistance = 300;
     public double MinThermalClimbRate = 2; // 2 m/s corresponds to approximately 400fpm
-    public Units.UnitSystem CurrentUnitSystem = Units.UnitSystem.Metric;
+    public UnitSystem CurrentUnitSystem = UnitSystem.Feet;
+    public ThermalSortingField ColorByField = ThermalSortingField.ThermalStrength;
+    public int NumberThermalStyles = 12;
     
     static Configuration instance;
     public static Configuration getConfig() {

@@ -15,6 +15,7 @@
  */
 package com.applied.thermal;
 
+import com.applied.thermal.types.DriftGradientVector;
 import com.javadocmd.simplelatlng.LatLng;
 import com.javadocmd.simplelatlng.LatLngTool;
 import com.javadocmd.simplelatlng.util.LengthUnit;
@@ -68,34 +69,15 @@ public class Thermal {
         computed = true;
     }
     
-    static final String THERMAL_STYLE_NAME = "style_thermal_";
-    static final String THERMAL_TRAJ_STYLE_NAME = "style_thermal_traj_";
-    public static void exportThermalStyleToKml(Document kmlDoc) {
-        // Color thermals by month.
-        for(int i = 0; i < 12; i++) {
-            Style style = kmlDoc.createAndAddStyle();
-            style.withId(THERMAL_STYLE_NAME + i);
-            int color = 0xffffff / 12 * i;
-            style.createAndSetLineStyle().withColor("ff" + Integer.toHexString(color)).withWidth(2);
-            style.createAndSetPolyStyle().withColor("7fffffff");
-            
-            // styles for thermal trajectories
-            style = kmlDoc.createAndAddStyle();
-            style.withId(THERMAL_TRAJ_STYLE_NAME + i);
-            style.createAndSetLineStyle().withColor("ff" + Integer.toHexString(color)).withWidth(4);
-            style.createAndSetPolyStyle().withColor("7fffffff");
-        }
-    }
-    
-    public void exportToKml(Folder kmlFolder, Folder trajFolder) {
+    public void exportToKml(Folder aKmlFolder, Folder aTrajFolder, String aStyle, String aTrajStyle) {
         if(!computed) {
             compute();
         }
         
-	Placemark placemark = kmlFolder.createAndAddPlacemark();
+	Placemark placemark = aKmlFolder.createAndAddPlacemark();
 	// use the style for each continent
 	placemark.withName(name)
-	    .withStyleUrl("#" + THERMAL_STYLE_NAME + fixesInThermal.get(0).time.getMonth())
+	    .withStyleUrl(aStyle)
             .withDescription("Date: " + fixesInThermal.get(0).time.toLocaleString() + 
                              "\nPilot: " + flight.pilot + 
                              "\nGlider: " + flight.airplane + 
@@ -108,10 +90,10 @@ public class Thermal {
             line.addToCoordinates(fix.pos.getLongitude(), fix.pos.getLatitude(), fix.alt);
         }
         
-        placemark = trajFolder.createAndAddPlacemark();
+        placemark = aTrajFolder.createAndAddPlacemark();
 	// use the style for each continent
 	placemark.withName(name + "_ThermalTrajectory")
-	    .withStyleUrl("#" + THERMAL_TRAJ_STYLE_NAME + fixesInThermal.get(0).time.getMonth());
+	    .withStyleUrl(aTrajStyle);
         placemark.withVisibility(false);
         line = placemark.createAndSetLineString();
         line.setAltitudeMode(AltitudeMode.ABSOLUTE);
@@ -121,30 +103,18 @@ public class Thermal {
         line.addToCoordinates(top.getLongitude(), top.getLatitude(), fixesInThermal.get(fixesInThermal.size()-1).alt);
     }
     
-    static class ShiftVector {
-        public double magnitude; //! Magnitude of shift in meters(lateral)/meters(altitude)
-        public double heading; //! Velocity heading in degrees.
-        
-        public LatLng extrapolateFixTo(FlightFix fix, double altitudeTo) {
-            double altitudeDiff = altitudeTo - fix.alt;
-            double metersLateral = magnitude * altitudeDiff;
-            double head = heading;
-            if(metersLateral < 0) {
-                metersLateral = -metersLateral;
-                head = (heading + 180) % 360;
-            }
-            return LatLngTool.travel(fix.pos, head, metersLateral, LengthUnit.METER);
-        }
-    }
-    
     /**
      * Generates an average shift vector for the entire thermal. This is currently
      * crudely calculated by getting the lateral distance from the top fix and bottom
      * fix and dividing out the altitude change.
      * @return 
      */
-    public ShiftVector getAverageShift() {
-        ShiftVector ret = new ShiftVector();
+    public DriftGradientVector getAverageShift() {
+        if(!computed) {
+            compute();
+        }
+        
+        DriftGradientVector ret = new DriftGradientVector();
         double distanceShift = LatLngTool.distance(fixesInThermal.get(fixesInThermal.size() - 1).pos, fixesInThermal.get(0).pos, LengthUnit.METER);
         double altShift = fixesInThermal.get(fixesInThermal.size() - 1).alt - fixesInThermal.get(0).alt;
         
@@ -172,6 +142,38 @@ public class Thermal {
      */
     public LatLng getGroundPosition() {
         return getAverageShift().extrapolateFixTo(fixesInThermal.get(0), 0);
+    }
+    
+    /**
+     * Returns the first flight fix.
+     * @return 
+     */
+    public FlightFix getFirstFix() {
+        return fixesInThermal.get(0);
+    }
+    
+    /**
+     * Returns the flight associated with the thermal.
+     * @return 
+     */
+    public Flight getFlight() {
+        return flight;
+    }
+    
+    public double getTotalClimb() {
+        if(!computed) {
+            compute();
+        }
+        
+        return maxHeight - minHeight;
+    }
+    
+    public double getAverageClimbRate() {
+        if(!computed) {
+            compute();
+        }
+        
+        return avgClimbRate;
     }
     
     Flight flight;
